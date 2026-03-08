@@ -2,7 +2,7 @@ const express = require('express');
 const Carousel = require('../models/Carousel');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
-const { upload } = require('../config/cloudinary');
+const { upload, deleteImageByUrl } = require('../config/cloudinary');
 
 // Middleware to protect routes (Admin only)
 const protectAdmin = async (req, res, next) => {
@@ -90,6 +90,9 @@ router.put('/:id', protectAdmin, upload.single('image'), async (req, res) => {
         if (order !== undefined) slide.order = Number(order);
 
         if (req.file) {
+            if (slide.image) {
+                await deleteImageByUrl(slide.image);
+            }
             slide.image = req.file.path;
         }
 
@@ -105,6 +108,10 @@ router.delete('/:id', protectAdmin, async (req, res) => {
     try {
         const slide = await Carousel.findById(req.params.id);
         if (!slide) return res.status(404).json({ message: 'Slide no encontrado' });
+
+        if (slide.image) {
+            await deleteImageByUrl(slide.image);
+        }
 
         await Carousel.findByIdAndDelete(req.params.id);
         res.json({ message: 'Slide eliminado correctamente' });

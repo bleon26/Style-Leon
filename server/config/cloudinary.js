@@ -21,4 +21,18 @@ const upload = multer({
     limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit generally
 });
 
-module.exports = { cloudinary, upload };
+const deleteImageByUrl = async (url) => {
+    if (!url || !url.includes('cloudinary.com')) return;
+    try {
+        const splitUrl = url.split('/');
+        const filename = splitUrl.pop();
+        const folder = splitUrl.pop();
+        const publicId = `${folder}/${filename.split('.')[0]}`;
+        await cloudinary.uploader.destroy(publicId);
+        console.log(`Eliminado de Cloudinary: ${publicId}`);
+    } catch (err) {
+        console.error('Error al eliminar de Cloudinary:', err);
+    }
+};
+
+module.exports = { cloudinary, upload, deleteImageByUrl };

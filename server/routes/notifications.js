@@ -4,7 +4,7 @@ const Notification = require('../models/Notification');
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
 const multer = require('multer');
-const { upload } = require('../config/cloudinary');
+const { upload, deleteImageByUrl } = require('../config/cloudinary');
 
 // Safe multer wrapper to catch errors
 const safeUpload = (fieldName) => (req, res, next) => {
@@ -147,6 +147,9 @@ router.put('/:id', protect, admin, safeUpload('image'), async (req, res) => {
         if (message) notification.message = message;
         if (type) notification.type = type;
         if (req.file) {
+            if (notification.image) {
+                await deleteImageByUrl(notification.image);
+            }
             notification.image = req.file.path;
         }
         await notification.save();
@@ -159,6 +162,10 @@ router.put('/:id', protect, admin, safeUpload('image'), async (req, res) => {
 // Delete notification (Admin)
 router.delete('/:id', protect, admin, async (req, res) => {
     try {
+        const notification = await Notification.findById(req.params.id);
+        if (notification && notification.image) {
+            await deleteImageByUrl(notification.image);
+        }
         await Notification.findByIdAndDelete(req.params.id);
         res.json({ message: 'Notificación eliminada' });
     } catch (err) {

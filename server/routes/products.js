@@ -3,7 +3,7 @@ const Product = require('../models/Product');
 const router = express.Router();
 
 const jwt = require('jsonwebtoken');
-const { upload } = require('../config/cloudinary');
+const { upload, deleteImageByUrl } = require('../config/cloudinary');
 
 // Middleware to protect routes (Admin only)
 const protectAdmin = async (req, res, next) => {
@@ -87,6 +87,13 @@ router.delete('/:id', protectAdmin, async (req, res) => {
         if (!product) {
             return res.status(404).json({ message: 'Producto no encontrado' });
         }
+        if (product.images && product.images.length > 0) {
+            for (const imgUrl of product.images) {
+                await deleteImageByUrl(imgUrl);
+            }
+        } else if (product.image) {
+            await deleteImageByUrl(product.image);
+        }
         await Product.findByIdAndDelete(req.params.id);
         console.log('Product deleted successfully:', req.params.id);
         res.json({ message: 'Producto eliminado' });
@@ -114,6 +121,13 @@ router.put('/:id', protectAdmin, upload.array('images', 5), async (req, res) => 
 
         // If new images were uploaded, replace the old ones
         if (req.files && req.files.length > 0) {
+            if (product.images && product.images.length > 0) {
+                for (const imgUrl of product.images) {
+                    await deleteImageByUrl(imgUrl);
+                }
+            } else if (product.image) {
+                await deleteImageByUrl(product.image);
+            }
             const imageUrls = req.files.map(file => file.path);
             product.image = imageUrls[0];
             product.images = imageUrls;
