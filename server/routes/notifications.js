@@ -4,37 +4,7 @@ const Notification = require('../models/Notification');
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
 const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
-
-// Configure Multer Storage
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        const uploadDir = 'uploads/';
-        if (!fs.existsSync(uploadDir)) {
-            fs.mkdirSync(uploadDir);
-        }
-        cb(null, uploadDir);
-    },
-    filename: (req, file, cb) => {
-        cb(null, Date.now() + path.extname(file.originalname));
-    }
-});
-
-const upload = multer({
-    storage: storage,
-    limits: { fileSize: 20 * 1024 * 1024 }, // 20MB limit
-    fileFilter: (req, file, cb) => {
-        const filetypes = /jpeg|jpg|png|webp/;
-        const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
-        const mimetype = filetypes.test(file.mimetype);
-
-        if (mimetype && extname) {
-            return cb(null, true);
-        }
-        cb(null, false);
-    }
-});
+const { upload } = require('../config/cloudinary');
 
 // Safe multer wrapper to catch errors
 const safeUpload = (fieldName) => (req, res, next) => {
@@ -137,7 +107,7 @@ router.get('/all', protect, admin, async (req, res) => {
 router.post('/', protect, admin, safeUpload('image'), async (req, res) => {
     try {
         const { userId, title, message, type, sendToAll } = req.body;
-        const image = req.file ? `/uploads/${req.file.filename}` : '';
+        const image = req.file ? req.file.path : '';
 
         if (sendToAll === 'true' || sendToAll === true) {
             const users = await User.find({});
@@ -177,7 +147,7 @@ router.put('/:id', protect, admin, safeUpload('image'), async (req, res) => {
         if (message) notification.message = message;
         if (type) notification.type = type;
         if (req.file) {
-            notification.image = `/uploads/${req.file.filename}`;
+            notification.image = req.file.path;
         }
         await notification.save();
         res.json(notification);

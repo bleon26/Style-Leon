@@ -3,38 +3,7 @@ const Product = require('../models/Product');
 const router = express.Router();
 
 const jwt = require('jsonwebtoken');
-const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
-
-// Configure Multer Storage
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        const uploadDir = 'uploads/';
-        if (!fs.existsSync(uploadDir)) {
-            fs.mkdirSync(uploadDir);
-        }
-        cb(null, uploadDir);
-    },
-    filename: (req, file, cb) => {
-        cb(null, Date.now() + path.extname(file.originalname));
-    }
-});
-
-const upload = multer({
-    storage: storage,
-    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
-    fileFilter: (req, file, cb) => {
-        const filetypes = /jpeg|jpg|png|webp/;
-        const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
-        const mimetype = filetypes.test(file.mimetype);
-        if (mimetype && extname) {
-            return cb(null, true);
-        } else {
-            cb('Solo se permiten imágenes (jpeg, jpg, png, webp)');
-        }
-    }
-});
+const { upload } = require('../config/cloudinary');
 
 // Middleware to protect routes (Admin only)
 const protectAdmin = async (req, res, next) => {
@@ -86,7 +55,7 @@ router.post('/', protectAdmin, upload.array('images', 5), async (req, res) => {
 
         let imageUrls = [];
         if (req.files && req.files.length > 0) {
-            imageUrls = req.files.map(file => `/uploads/${file.filename}`);
+            imageUrls = req.files.map(file => file.path);
         }
 
         const product = new Product({
@@ -145,7 +114,7 @@ router.put('/:id', protectAdmin, upload.array('images', 5), async (req, res) => 
 
         // If new images were uploaded, replace the old ones
         if (req.files && req.files.length > 0) {
-            const imageUrls = req.files.map(file => `/uploads/${file.filename}`);
+            const imageUrls = req.files.map(file => file.path);
             product.image = imageUrls[0];
             product.images = imageUrls;
         }

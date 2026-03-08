@@ -2,38 +2,7 @@ const express = require('express');
 const Carousel = require('../models/Carousel');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
-const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
-
-// Configure Multer Storage
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        const uploadDir = 'uploads/';
-        if (!fs.existsSync(uploadDir)) {
-            fs.mkdirSync(uploadDir);
-        }
-        cb(null, uploadDir);
-    },
-    filename: (req, file, cb) => {
-        cb(null, 'carousel_' + Date.now() + path.extname(file.originalname));
-    }
-});
-
-const upload = multer({
-    storage: storage,
-    limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit for carousel high-res images
-    fileFilter: (req, file, cb) => {
-        const filetypes = /jpeg|jpg|png|webp/;
-        const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
-        const mimetype = filetypes.test(file.mimetype);
-        if (mimetype && extname) {
-            return cb(null, true);
-        } else {
-            cb('Solo se permiten imágenes (jpeg, jpg, png, webp)');
-        }
-    }
-});
+const { upload } = require('../config/cloudinary');
 
 // Middleware to protect routes (Admin only)
 const protectAdmin = async (req, res, next) => {
@@ -80,7 +49,7 @@ router.post('/', protectAdmin, upload.single('image'), async (req, res) => {
         }
 
         const slide = new Carousel({
-            image: `/uploads/${req.file.filename}`,
+            image: req.file.path,
             tag,
             title,
             description,
@@ -121,7 +90,7 @@ router.put('/:id', protectAdmin, upload.single('image'), async (req, res) => {
         if (order !== undefined) slide.order = Number(order);
 
         if (req.file) {
-            slide.image = `/uploads/${req.file.filename}`;
+            slide.image = req.file.path;
         }
 
         await slide.save();
