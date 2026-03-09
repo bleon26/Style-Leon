@@ -153,6 +153,27 @@ app.use((err, req, res, next) => {
     res.status(500).json({ message: err.message || 'Algo salió mal en el servidor' });
 });
 
+// Auto-ping para evitar que Render duerma el servidor (Ping cada 14 min)
+const https = require('https');
+const http = require('http');
+
+setInterval(() => {
+    const backendUrl = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`;
+    const client = backendUrl.startsWith('https') ? https : http;
+
+    console.log(`⏱️ Ejecutando auto-ping a ${backendUrl} para evitar suspensión`);
+
+    client.get(backendUrl, (res) => {
+        if (res.statusCode === 200) {
+            console.log('✅ Auto-ping exitoso, servidor activo');
+        } else {
+            console.log(`⚠️ Auto-ping finalizó con código: ${res.statusCode}`);
+        }
+    }).on('error', (err) => {
+        console.error('❌ Error en el auto-ping:', err.message);
+    });
+}, 14 * 60 * 1000); // 14 minutos en milisegundos
+
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Servidor corriendo en http://0.0.0.0:${PORT}`);
 });

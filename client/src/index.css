@@ -3137,6 +3137,35 @@ select {
 }
 
 /* ==============================
+   NOTIF DROPDOWN - Responsive
+============================== */
+.notif-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    width: 360px;
+    max-height: 450px;
+    background: white;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    z-index: 1000;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    animation: fadeIn 0.2s ease;
+}
+
+@media (max-width: 480px) {
+    .notif-dropdown {
+        position: fixed;
+        top: 116px;
+        left: 16px;
+        right: 16px;
+        width: auto;
+        min-width: auto;
+    }
+}
+
+/* ==============================
    USER DROPDOWN - Responsive
 ============================== */
 .user-dropdown {

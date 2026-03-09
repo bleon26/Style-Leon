@@ -147,20 +147,7 @@ const Navbar = ({ onSearch, onSearchSubmit, onCategoryChange, currentCategory })
 
                                 {/* Notification Dropdown */}
                                 {notifOpen && (
-                                    <div style={{
-                                        position: 'absolute',
-                                        top: '100%',
-                                        right: 0,
-                                        width: '360px',
-                                        maxHeight: '450px',
-                                        background: 'white',
-                                        borderRadius: '16px',
-                                        boxShadow: '0 10px 40px rgba(0,0,0,0.18)',
-                                        zIndex: 1000,
-                                        overflow: 'hidden',
-                                        border: '1px solid #eee',
-                                        animation: 'fadeIn 0.2s ease'
-                                    }}>
+                                    <div className="notif-dropdown">
                                         {/* Header */}
                                         <div style={{
                                             padding: '16px 20px',
